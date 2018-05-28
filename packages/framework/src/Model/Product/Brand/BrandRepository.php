@@ -69,19 +69,4 @@ class BrandRepository
     {
         return $this->getBrandRepository()->findBy([], ['name' => 'asc']);
     }
-
-    /**
-     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\Brand $brand
-     * @return \Shopsys\FrameworkBundle\Model\Product\Brand\BrandDomain[]
-     */
-    public function getBrandDomainsIndexedByDomain($brand)
-    {
-        $queryBuilder = $this->em->createQueryBuilder()
-            ->select('bd')
-            ->from(BrandDomain::class, 'bd', 'bd.domainId')
-            ->where('bd.brand = :brand')->setParameter('brand', $brand)
-            ->orderBy('bd.domainId', 'ASC');
-
-        return $queryBuilder->getQuery()->execute();
-    }
 }

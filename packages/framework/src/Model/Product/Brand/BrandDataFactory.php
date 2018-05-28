@@ -38,8 +38,6 @@ class BrandDataFactory
      */
     public function createFromBrand(Brand $brand)
     {
-        $brandDomains = $this->brandFacade->getBrandDomainsByBrand($brand);
-
         $brandData = new BrandData();
         $brandData->name = $brand->getName();
 
@@ -51,8 +49,12 @@ class BrandDataFactory
             $brandData->descriptions[$translation->getLocale()] = $translation->getDescription();
         }
 
-        foreach ($brandDomains as $brandDomain) {
+        foreach ($brand->getDomains() as $brandDomain) {
             $domainId = $brandDomain->getDomainId();
+
+            $brandData->seoH1s[$domainId] = $brand->getSeoH1($domainId);
+            $brandData->seoTitles[$domainId] = $brand->getSeoTitle($domainId);
+            $brandData->seoMetaDescriptions[$domainId] = $brand->getSeoMetaDescription($domainId);
 
             $brandData->urls->mainFriendlyUrlsByDomainId[$domainId] =
                 $this->friendlyUrlFacade->findMainFriendlyUrl(

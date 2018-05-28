@@ -40,18 +40,12 @@ class BrandFacade
     protected $brandFactory;
 
     /**
-     * @var \Shopsys\FrameworkBundle\Model\Product\Brand\BrandDomainFactoryInterface
-     */
-    protected $brandDomainFactory;
-
-    /**
      * @param \Doctrine\ORM\EntityManagerInterface $em
      * @param \Shopsys\FrameworkBundle\Model\Product\Brand\BrandRepository $brandRepository
      * @param \Shopsys\FrameworkBundle\Component\Image\ImageFacade $imageFacade
      * @param \Shopsys\FrameworkBundle\Component\Router\FriendlyUrl\FriendlyUrlFacade $friendlyUrlFacade
      * @param \Shopsys\FrameworkBundle\Component\Domain\Domain $domain
      * @param \Shopsys\FrameworkBundle\Model\Product\Brand\BrandFactoryInterface $brandFactory
-     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\BrandDomainFactoryInterface $brandDomainFactory
      */
     public function __construct(
         EntityManagerInterface $em,
@@ -59,8 +53,7 @@ class BrandFacade
         ImageFacade $imageFacade,
         FriendlyUrlFacade $friendlyUrlFacade,
         Domain $domain,
-        BrandFactoryInterface $brandFactory,
-        BrandDomainFactoryInterface $brandDomainFactory
+        BrandFactoryInterface $brandFactory
     ) {
         $this->em = $em;
         $this->brandRepository = $brandRepository;
@@ -68,7 +61,6 @@ class BrandFacade
         $this->friendlyUrlFacade = $friendlyUrlFacade;
         $this->domain = $domain;
         $this->brandFactory = $brandFactory;
-        $this->brandDomainFactory = $brandDomainFactory;
     }
 
     /**
@@ -81,18 +73,15 @@ class BrandFacade
     }
 
     /**
-     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\BrandEditData $brandEditData
+     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\BrandData $brandData
      * @return \Shopsys\FrameworkBundle\Model\Product\Brand\Brand
      */
-    public function create(BrandEditData $brandEditData)
+    public function create(BrandData $brandData)
     {
         $domains = $this->domain->getAll();
-        $brandData = $brandEditData->getBrandData();
         $brand = $this->brandFactory->create($brandData);
         $this->em->persist($brand);
         $this->em->flush();
-        $this->createBrandDomains($brand, $domains);
-        $this->refreshBrandDomains($brand, $brandEditData);
         $this->imageFacade->uploadImage($brand, $brandData->image->uploadedFiles, null);
 
         foreach ($domains as $domain) {
@@ -110,19 +99,16 @@ class BrandFacade
 
     /**
      * @param $brandId
-     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\BrandEditData $brandEditData
+     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\BrandData $brandData
      * @return \Shopsys\FrameworkBundle\Model\Product\Brand\Brand
      */
-    public function edit($brandId, BrandEditData $brandEditData)
+    public function edit($brandId, BrandData $brandData)
     {
         $domains = $this->domain->getAll();
         $brand = $this->brandRepository->getById($brandId);
-        $brandData = $brandEditData->getBrandData();
         $brand->edit($brandData);
         $this->imageFacade->uploadImage($brand, $brandData->image->uploadedFiles, null);
-
-        $this->refreshBrandDomains($brand, $brandEditData);
-
+        $this->em->persist($brand);
         $this->em->flush();
 
         $this->friendlyUrlFacade->saveUrlListFormData('front_brand_detail', $brand->getId(), $brandData->urls);
@@ -137,36 +123,6 @@ class BrandFacade
         $this->em->flush();
 
         return $brand;
-    }
-
-    /**
-     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\Brand $brand
-     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\BrandEditData $brandEditData
-     */
-    protected function refreshBrandDomains(Brand $brand, BrandEditData $brandEditData)
-    {
-        $brandDomains = $this->brandRepository->getBrandDomainsByBrand($brand);
-        $seoTitles = $brandEditData->seoTitles;
-        $seoMetaDescriptions = $brandEditData->seoMetaDescriptions;
-        $seoH1S = $brandEditData->seoH1s;
-
-        foreach ($brandDomains as $brandDomain) {
-            $domainId = $brandDomain->getDomainId();
-
-            if (isset($seoTitles[$domainId])) {
-                $brandDomain->setSeoTitle($seoTitles[$domainId]);
-            }
-
-            if (!empty($seoMetaDescriptions[$domainId])) {
-                $brandDomain->setSeoMetaDescription($seoMetaDescriptions[$domainId]);
-            }
-
-            if (!empty($seoH1S[$domainId])) {
-                $brandDomain->setSeoH1($seoH1S[$domainId]);
-            }
-        }
-
-        $this->em->flush($brandDomains);
     }
 
     /**
@@ -185,29 +141,5 @@ class BrandFacade
     public function getAll()
     {
         return $this->brandRepository->getAll();
-    }
-
-    /**
-     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\Brand $brand
-     * @param \Shopsys\FrameworkBundle\Component\Domain\Config\DomainConfig[] $domains
-     */
-    protected function createBrandDomains(Brand $brand, array $domains)
-    {
-        $toFlush = [];
-        foreach ($domains as $domain) {
-            $brandDomain = $this->brandDomainFactory->create($brand, $domain->getId());
-            $this->em->persist($brandDomain);
-            $toFlush[] = $brandDomain;
-        }
-        $this->em->flush($toFlush);
-    }
-
-    /**
-     * @param \Shopsys\FrameworkBundle\Model\Product\Brand\Brand $brand
-     * @return \Shopsys\FrameworkBundle\Model\Product\Brand\BrandDomain[]
-     */
-    public function getBrandDomainsByBrand(Brand $brand)
-    {
-        return $this->brandRepository->getBrandDomainsByBrand($brand);
     }
 }
