@@ -4,10 +4,12 @@
 {% block h1 %}{{ 'Bestsellers'|trans }}{% endblock %}
 
 {% block main_content %}
+    {% import _self as self %}
 
     {{ render(controller('ShopsysFrameworkBundle:Admin/Domain:domainTabs')) }}
 
     {% macro categoryTreeItem(categoryDetails, selectedDomainId, bestsellingProductsInCategories) %}
+        {% import _self as self %}
         <ul class="js-category-tree-items form-tree__content">
             {% for categoryDetail in categoryDetails %}
                 <li class="js-category-tree-item form-tree__item" id="js-category-tree-{{ categoryDetail.category.id }}">

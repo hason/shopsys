@@ -13,6 +13,7 @@
     {{ render(controller('ShopsysFrameworkBundle:Admin/Category:listDomainTabs')) }}
 
     {% macro categoryTreeItem(categoryDetails, isFirstLevel) %}
+        {% import _self as self %}
         <ul class="js-category-tree-items {{ isFirstLevel ? 'form-tree__content' : '' }}">
             {% for categoryDetail in categoryDetails %}
                 <li class="js-category-tree-item form-tree__item" id="js-category-tree-{{ categoryDetail.category.id }}">

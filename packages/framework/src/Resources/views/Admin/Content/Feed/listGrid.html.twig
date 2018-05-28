@@ -15,6 +15,7 @@
 {% endmacro %}
 
 {% block grid_value_cell_id_label %}
+    {% import _self as self %}
     {% if row.created %}
         <a href="{{ row.url }}" target="_blank">{{ _self.getLabel(row) }}</a>
     {% else %}
